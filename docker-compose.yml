@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: iles
+      POSTGRES_USER: iles
+      POSTGRES_PASSWORD: iles_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - iles_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  iles_postgres_data:
