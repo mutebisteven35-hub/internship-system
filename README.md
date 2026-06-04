@@ -215,6 +215,93 @@ Do **not** run this in production unless you intentionally want demo/test data o
 python backend/manage.py seed
 ```
 
+## Vercel Deployment
+
+Vercel can host the React frontend and the Django backend, but you still need an external PostgreSQL database such as Neon or Supabase.
+
+Create two Vercel projects from the same GitHub repository:
+
+- one project for `frontend`
+- one project for `backend`
+
+### 1. Create PostgreSQL
+
+Create a PostgreSQL database on Neon or Supabase, then copy the database connection string.
+
+It should look similar to:
+
+```text
+postgresql://USER:PASSWORD@HOST/DBNAME?sslmode=require
+```
+
+### 2. Deploy Backend on Vercel
+
+In Vercel, import the GitHub repository and configure the backend project:
+
+```text
+Root Directory: backend
+Framework Preset: Other / Django if shown
+Build Command: leave default unless Vercel asks
+Output Directory: leave empty
+Install Command: pip install -r requirements.txt
+```
+
+Add these backend environment variables in Vercel:
+
+```text
+DJANGO_SECRET_KEY=replace-with-a-long-random-secret
+DJANGO_DEBUG=False
+DJANGO_ALLOWED_HOSTS=.vercel.app
+DATABASE_URL=your-postgres-connection-string
+CORS_ALLOWED_ORIGINS=https://your-frontend-project.vercel.app
+DJANGO_CSRF_TRUSTED_ORIGINS=https://your-frontend-project.vercel.app,https://your-backend-project.vercel.app
+DJANGO_SECURE_SSL_REDIRECT=False
+```
+
+### 3. Deploy Frontend on Vercel
+
+Import the same GitHub repository again and configure the frontend project:
+
+```text
+Root Directory: frontend
+Framework Preset: Vite
+Build Command: npm run build
+Output Directory: dist
+Install Command: npm install
+```
+
+Add this frontend environment variable:
+
+```text
+VITE_API_BASE_URL=https://your-backend-project.vercel.app/api
+```
+
+### 4. Run Production Migrations
+
+After the backend is deployed, run migrations from your laptop against the production PostgreSQL database:
+
+```powershell
+cd C:\Users\USER\OneDrive\Documents\ILES\backend
+$env:DATABASE_URL="your-postgres-connection-string"
+$env:DJANGO_SECRET_KEY="replace-with-a-long-random-secret"
+$env:DJANGO_DEBUG="False"
+$env:DJANGO_ALLOWED_HOSTS=".vercel.app"
+.\.venv\Scripts\python.exe manage.py migrate
+.\.venv\Scripts\python.exe manage.py createsuperuser
+```
+
+Do not run seed unless you want demo/sample data online:
+
+```powershell
+.\.venv\Scripts\python.exe manage.py seed
+```
+
+If your Vercel project URLs change, update:
+
+- frontend `VITE_API_BASE_URL`
+- backend `CORS_ALLOWED_ORIGINS`
+- backend `DJANGO_CSRF_TRUSTED_ORIGINS`
+
 ## Optional PostgreSQL With Docker
 
 ```powershell
