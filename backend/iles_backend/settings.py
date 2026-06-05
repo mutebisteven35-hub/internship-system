@@ -6,6 +6,9 @@ from django.core.exceptions import ImproperlyConfigured
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+PROJECT_DIR = BASE_DIR.parent
+FRONTEND_DIST_DIR = PROJECT_DIR / "frontend" / "dist"
+FRONTEND_INDEX = FRONTEND_DIST_DIR / "index.html"
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "iles-local-development-key")
 DEBUG = os.getenv("DJANGO_DEBUG", "True").lower() in {"1", "true", "yes", "on"}
@@ -63,7 +66,7 @@ ROOT_URLCONF = "iles_backend.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [FRONTEND_DIST_DIR],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -136,9 +139,13 @@ TIME_ZONE = "Africa/Kampala"
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-MEDIA_URL = "media/"
+STATICFILES_DIRS = []
+if FRONTEND_DIST_DIR.exists():
+    STATICFILES_DIRS.append(("frontend", FRONTEND_DIST_DIR))
+
+MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

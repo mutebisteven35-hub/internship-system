@@ -135,7 +135,127 @@ The project includes production-ready settings for public hosting.
 - Static files are collected and served with WhiteNoise.
 - Gunicorn is included for running Django in production.
 - CORS, CSRF, HTTPS redirect, secure cookies, and allowed hosts are controlled by environment variables.
+- PythonAnywhere can serve the Django API/admin and the built React app from one web app.
 - `render.yaml` defines a Render Blueprint for a Django backend, React static frontend, and PostgreSQL database.
+
+## PythonAnywhere Deployment
+
+PythonAnywhere can host this project as one Django web app:
+
+- `/api/` serves the Django REST API.
+- `/admin/` serves Django admin.
+- `/` and React routes such as `/app/dashboard` serve the built React frontend.
+
+### 1. Clone the Repository
+
+Open a PythonAnywhere Bash console:
+
+```bash
+cd ~
+git clone https://github.com/mutebisteven35-hub/internship-system.git ILES
+cd ~/ILES
+```
+
+### 2. Create a Virtualenv
+
+Use a Python version available on your PythonAnywhere account:
+
+```bash
+mkvirtualenv --python=/usr/bin/python3.12 iles-venv
+workon iles-venv
+pip install -r ~/ILES/backend/requirements.txt
+```
+
+### 3. Create Production Environment Variables
+
+Create `~/ILES/.env` on PythonAnywhere:
+
+```bash
+DJANGO_SECRET_KEY=replace-with-a-long-random-secret
+DJANGO_DEBUG=False
+DJANGO_ALLOWED_HOSTS=YOURUSERNAME.pythonanywhere.com
+DJANGO_SECURE_SSL_REDIRECT=True
+DJANGO_SESSION_COOKIE_SECURE=True
+DJANGO_CSRF_COOKIE_SECURE=True
+VITE_API_BASE_URL=/api
+VITE_BASE_PATH=/static/frontend/
+```
+
+For a quick demo, the app will use SQLite if no database variables are set. For production, use PostgreSQL and add:
+
+```bash
+DATABASE_URL=postgres://DB_USER:DB_PASSWORD@DB_HOST:DB_PORT/DB_NAME
+```
+
+Load these variables when running console commands:
+
+```bash
+set -a; source ~/ILES/.env; set +a
+```
+
+Optional convenience:
+
+```bash
+echo 'set -a; source ~/ILES/.env; set +a' >> ~/.virtualenvs/iles-venv/bin/postactivate
+```
+
+### 4. Build Frontend, Static Files, and Database
+
+```bash
+workon iles-venv
+cd ~/ILES
+bash scripts/pythonanywhere_build.sh
+python backend/manage.py createsuperuser
+```
+
+Do not run seed data on a real production site unless you intentionally want demo accounts online:
+
+```bash
+python backend/manage.py seed
+```
+
+### 5. Configure the PythonAnywhere Web App
+
+In the PythonAnywhere **Web** tab:
+
+1. Create a new web app using **Manual configuration**.
+2. Choose the same Python version used for the virtualenv.
+3. Set the virtualenv to:
+
+```text
+/home/YOURUSERNAME/.virtualenvs/iles-venv
+```
+
+4. Set source code and working directory to:
+
+```text
+/home/YOURUSERNAME/ILES/backend
+```
+
+5. Open the WSGI file link, replace its contents with the example in:
+
+```text
+deployment/pythonanywhere_wsgi.py
+```
+
+The example assumes the repository was cloned to `~/ILES`.
+
+### 6. Configure Static Files
+
+In the PythonAnywhere **Web > Static files** section, add:
+
+```text
+URL: /static/
+Directory: /home/YOURUSERNAME/ILES/backend/staticfiles
+```
+
+Click **Reload** on the Web tab, then open:
+
+```text
+https://YOURUSERNAME.pythonanywhere.com/
+https://YOURUSERNAME.pythonanywhere.com/admin/
+https://YOURUSERNAME.pythonanywhere.com/api/
+```
 
 ## Render Deployment
 
