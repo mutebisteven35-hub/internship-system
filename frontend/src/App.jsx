@@ -13,6 +13,7 @@ import {
   Settings,
   ShieldCheck,
   Star,
+  UserPlus,
   UserRound,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -137,8 +138,8 @@ function Shell() {
 function Login() {
   const { user, login } = useAuth();
   const location = useLocation();
-  const [username, setUsername] = useState("student");
-  const [password, setPassword] = useState("Passw0rd!");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const successMessage = location.state?.message;
@@ -171,15 +172,20 @@ function Login() {
         <form onSubmit={submit}>
           <label>
             Username
-            <input value={username} onChange={(event) => setUsername(event.target.value)} autoFocus />
+            <input value={username} onChange={(event) => setUsername(event.target.value)} autoFocus required />
           </label>
           <label>
             Password
-            <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} />
+            <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} required />
           </label>
-          <Link className="text-link" to="/forgot-password">
-            Forgot password?
-          </Link>
+          <div className="auth-links">
+            <Link className="text-link" to="/register">
+              Create account
+            </Link>
+            <Link className="text-link" to="/forgot-password">
+              Forgot password?
+            </Link>
+          </div>
           {successMessage && <p className="success">{successMessage}</p>}
           {error && <p className="error">{error}</p>}
           <button className="primary" disabled={busy}>
@@ -187,11 +193,109 @@ function Login() {
             <span>{busy ? "Signing in..." : "Sign in"}</span>
           </button>
         </form>
-        <div className="demo-logins">
-          <button onClick={() => setUsername("admin")}>admin</button>
-          <button onClick={() => setUsername("instructor")}>instructor</button>
-          <button onClick={() => setUsername("student")}>student</button>
+      </section>
+    </main>
+  );
+}
+
+function Register() {
+  const { user, loginWithToken } = useAuth();
+  const navigate = useNavigate();
+  const [form, setForm] = useState({
+    username: "",
+    email: "",
+    first_name: "",
+    last_name: "",
+    student_number: "",
+    department: "",
+    password: "",
+    confirm_password: "",
+  });
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  if (user) return <Navigate to="/app/dashboard" replace />;
+
+  function update(field, value) {
+    setForm((current) => ({ ...current, [field]: value }));
+  }
+
+  async function submit(event) {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    try {
+      const data = await api.register(form);
+      loginWithToken(data.token, data.user);
+      navigate("/app/dashboard", { replace: true });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <main className="login-screen">
+      <section className="login-panel">
+        <div className="brand login-brand">
+          <UserPlus aria-hidden="true" />
+          <div>
+            <strong>Create account</strong>
+            <span>{APP_DISPLAY_NAME}</span>
+          </div>
         </div>
+        <form onSubmit={submit}>
+          <label>
+            Username
+            <input value={form.username} onChange={(event) => update("username", event.target.value)} autoFocus required />
+          </label>
+          <label>
+            Email
+            <input type="email" value={form.email} onChange={(event) => update("email", event.target.value)} />
+          </label>
+          <div className="form-grid">
+            <label>
+              First name
+              <input value={form.first_name} onChange={(event) => update("first_name", event.target.value)} />
+            </label>
+            <label>
+              Last name
+              <input value={form.last_name} onChange={(event) => update("last_name", event.target.value)} />
+            </label>
+          </div>
+          <div className="form-grid">
+            <label>
+              Student number
+              <input value={form.student_number} onChange={(event) => update("student_number", event.target.value)} />
+            </label>
+            <label>
+              Department
+              <input value={form.department} onChange={(event) => update("department", event.target.value)} />
+            </label>
+          </div>
+          <label>
+            Password
+            <input type="password" value={form.password} onChange={(event) => update("password", event.target.value)} required />
+          </label>
+          <label>
+            Confirm password
+            <input
+              type="password"
+              value={form.confirm_password}
+              onChange={(event) => update("confirm_password", event.target.value)}
+              required
+            />
+          </label>
+          {error && <p className="error">{error}</p>}
+          <button className="primary" disabled={busy}>
+            <UserPlus aria-hidden="true" />
+            <span>{busy ? "Creating..." : "Create student account"}</span>
+          </button>
+        </form>
+        <Link className="text-link auth-back-link" to="/login">
+          Already have an account?
+        </Link>
       </section>
     </main>
   );
@@ -1332,6 +1436,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/dashboard" element={<Navigate to="/app/dashboard" replace />} />
       <Route path="/internship" element={<Navigate to="/app/internship" replace />} />

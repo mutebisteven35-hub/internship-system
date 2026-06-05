@@ -89,6 +89,48 @@ class UserAdminSerializer(serializers.ModelSerializer):
         return instance
 
 
+class RegistrationSerializer(serializers.Serializer):
+    username = serializers.CharField(max_length=150)
+    email = serializers.EmailField(required=False, allow_blank=True)
+    first_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    last_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    student_number = serializers.CharField(max_length=40, required=False, allow_blank=True)
+    department = serializers.CharField(max_length=120, required=False, allow_blank=True)
+    password = serializers.CharField(write_only=True, validators=[validate_password])
+    confirm_password = serializers.CharField(write_only=True)
+
+    def validate_username(self, value):
+        username = value.strip()
+        if not username:
+            raise serializers.ValidationError("Username is required.")
+        if User.objects.filter(username__iexact=username).exists():
+            raise serializers.ValidationError("That username is already in use.")
+        return username
+
+    def validate_email(self, value):
+        email = value.strip()
+        if email and User.objects.filter(email__iexact=email).exists():
+            raise serializers.ValidationError("That email is already in use.")
+        return email
+
+    def validate(self, attrs):
+        if attrs["password"] != attrs["confirm_password"]:
+            raise serializers.ValidationError({"confirm_password": "Passwords do not match."})
+        return attrs
+
+    def create(self, validated_data):
+        profile_data = {
+            "role": UserProfile.ROLE_STUDENT,
+            "department": validated_data.pop("department", ""),
+            "student_number": validated_data.pop("student_number", ""),
+        }
+        password = validated_data.pop("password")
+        validated_data.pop("confirm_password", None)
+        user = User.objects.create_user(password=password, **validated_data)
+        UserProfile.objects.update_or_create(user=user, defaults=profile_data)
+        return user
+
+
 class ChangePasswordSerializer(serializers.Serializer):
     current_password = serializers.CharField(write_only=True)
     new_password = serializers.CharField(write_only=True)

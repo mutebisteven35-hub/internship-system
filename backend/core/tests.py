@@ -90,6 +90,57 @@ class IlesApiTests(APITestCase):
         self.assertEqual(me.status_code, 200)
         self.assertEqual(me.data["role"], UserProfile.ROLE_STUDENT)
 
+    def test_public_registration_creates_student_account(self):
+        response = self.client.post(
+            reverse("register"),
+            {
+                "username": "newstudent",
+                "email": "newstudent@iles.local",
+                "first_name": "New",
+                "last_name": "Student",
+                "student_number": "S1001",
+                "department": "Computing",
+                "password": "NewStudentPassw0rd!",
+                "confirm_password": "NewStudentPassw0rd!",
+            },
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertIn("token", response.data)
+        self.assertEqual(response.data["user"]["role"], UserProfile.ROLE_STUDENT)
+
+        user = User.objects.get(username="newstudent")
+        self.assertTrue(user.check_password("NewStudentPassw0rd!"))
+        self.assertEqual(user.profile.role, UserProfile.ROLE_STUDENT)
+        self.assertEqual(user.profile.student_number, "S1001")
+
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {response.data['token']}")
+        me = self.client.get(reverse("current-user"))
+        self.assertEqual(me.status_code, 200)
+        self.assertEqual(me.data["username"], "newstudent")
+
+    def test_registration_rejects_duplicate_username_or_email(self):
+        duplicate_username = self.client.post(
+            reverse("register"),
+            {
+                "username": "student",
+                "email": "another@iles.local",
+                "password": "NewStudentPassw0rd!",
+                "confirm_password": "NewStudentPassw0rd!",
+            },
+        )
+        self.assertEqual(duplicate_username.status_code, 400)
+
+        duplicate_email = self.client.post(
+            reverse("register"),
+            {
+                "username": "anotherstudent",
+                "email": "student@iles.local",
+                "password": "NewStudentPassw0rd!",
+                "confirm_password": "NewStudentPassw0rd!",
+            },
+        )
+        self.assertEqual(duplicate_email.status_code, 400)
+
     def test_logged_in_user_can_change_password_and_old_token_is_invalid(self):
         self.auth(self.student)
         old_token = Token.objects.get(user=self.student)

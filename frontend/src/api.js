@@ -44,6 +44,7 @@ export async function apiRequest(path, options = {}) {
 
 export const api = {
   login: (username, password) => apiRequest("/auth/login/", { method: "POST", body: { username, password } }),
+  register: (body) => apiRequest("/auth/register/", { method: "POST", body }),
   logout: () => apiRequest("/auth/logout/", { method: "POST" }),
   changePassword: (body) => apiRequest("/auth/change-password/", { method: "POST", body }),
   requestPasswordReset: (body) => apiRequest("/auth/password-reset/request/", { method: "POST", body }),

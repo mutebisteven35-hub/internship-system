@@ -103,6 +103,12 @@ button:disabled {
   gap: 0.85rem;
 }
 
+.form-grid {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .login-panel label,
 .compact-form label {
   color: #40515b;
@@ -128,22 +134,6 @@ textarea {
   resize: vertical;
 }
 
-.demo-logins {
-  border-top: 1px solid #d8e0e5;
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 1rem;
-  padding-top: 1rem;
-}
-
-.demo-logins button {
-  background: #fff;
-  border-color: #c7d1d9;
-  color: #1e2930;
-  flex: 1;
-  min-width: 0;
-}
-
 .text-link {
   color: #116466;
   font-weight: 700;
@@ -152,6 +142,14 @@ textarea {
 
 .text-link:hover {
   text-decoration: underline;
+}
+
+.auth-links {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: space-between;
 }
 
 .auth-back-link {
@@ -678,8 +676,7 @@ dd {
     flex-direction: column;
   }
 
-  .row-actions,
-  .demo-logins {
+  .row-actions {
     flex-wrap: wrap;
   }
 
@@ -702,6 +699,10 @@ dd {
   }
 
   dl {
+    grid-template-columns: 1fr;
+  }
+
+  .form-grid {
     grid-template-columns: 1fr;
   }
 

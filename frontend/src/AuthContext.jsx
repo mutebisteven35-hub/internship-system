@@ -22,6 +22,11 @@ export function AuthProvider({ children }) {
     setUser(data.user);
   }
 
+  function loginWithToken(token, nextUser) {
+    setToken(token);
+    setUser(nextUser);
+  }
+
   async function logout() {
     try {
       await api.logout();
@@ -32,7 +37,7 @@ export function AuthProvider({ children }) {
     setUser(null);
   }
 
-  const value = useMemo(() => ({ user, loading, login, logout }), [user, loading]);
+  const value = useMemo(() => ({ user, loading, login, loginWithToken, logout }), [user, loading]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

@@ -22,6 +22,7 @@ from .views import (
     PasswordResetConfirmView,
     PasswordResetRequestView,
     ProgramViewSet,
+    RegistrationView,
     SubmissionViewSet,
     UserViewSet,
     WorkflowRecordViewSet,
@@ -48,6 +49,7 @@ router.register("workflow-records", WorkflowRecordViewSet, basename="workflow-re
 
 urlpatterns = [
     path("auth/login/", LoginView.as_view(), name="login"),
+    path("auth/register/", RegistrationView.as_view(), name="register"),
     path("auth/logout/", LogoutView.as_view(), name="logout"),
     path("auth/change-password/", ChangePasswordView.as_view(), name="change-password"),
     path("auth/password-reset/request/", PasswordResetRequestView.as_view(), name="password-reset-request"),

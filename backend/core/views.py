@@ -46,6 +46,7 @@ from .serializers import (
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
     ProgramSerializer,
+    RegistrationSerializer,
     ReviewLogbookSerializer,
     SubmissionSerializer,
     UserAdminSerializer,
@@ -119,6 +120,19 @@ class LoginView(APIView):
             return Response({"detail": "Invalid username or password."}, status=status.HTTP_400_BAD_REQUEST)
         token, _ = Token.objects.get_or_create(user=user)
         return Response({"token": token.key, "user": UserSummarySerializer(user).data})
+
+
+class RegistrationView(APIView):
+    permission_classes = [permissions.AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        serializer = RegistrationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        audit(None, "auth.registered", user)
+        token, _ = Token.objects.get_or_create(user=user)
+        return Response({"token": token.key, "user": UserSummarySerializer(user).data}, status=status.HTTP_201_CREATED)
 
 
 class LogoutView(APIView):
