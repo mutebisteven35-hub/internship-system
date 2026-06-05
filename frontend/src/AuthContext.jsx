@@ -20,6 +20,7 @@ export function AuthProvider({ children }) {
     const data = await api.login(username, password);
     setToken(data.token);
     setUser(data.user);
+    return data.user;
   }
 
   function loginWithToken(token, nextUser) {

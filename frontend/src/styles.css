@@ -346,28 +346,99 @@ h2 {
 .landing-screen {
   align-items: center;
   background:
-    linear-gradient(135deg, rgba(15, 51, 64, 0.94), rgba(17, 100, 102, 0.88)),
-    linear-gradient(45deg, #edf7f4 0%, #d9e9ee 52%, #f7e6bf 100%);
+    linear-gradient(135deg, rgba(15, 51, 64, 0.9), rgba(17, 100, 102, 0.84)),
+    url("https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1800&q=80");
+  background-position: center;
+  background-size: cover;
   display: flex;
-  flex-direction: column;
-  gap: 2rem;
   justify-content: center;
   min-height: 100vh;
   padding: 1.25rem;
-  text-align: center;
+}
+
+.landing-content {
+  color: #fff;
+  display: grid;
+  gap: 1.2rem;
+  max-width: 1120px;
+  width: 100%;
+}
+
+.landing-brand {
+  align-items: flex-start;
+  color: #fff;
+}
+
+.landing-brand span {
+  color: #d6e4ea;
 }
 
 .landing-title {
   color: #fff;
-  font-family: "Times New Roman", Times, serif;
-  font-size: clamp(2.8rem, 8vw, 7.25rem);
-  font-weight: 700;
+  font-size: 3rem;
+  font-weight: 900;
   letter-spacing: 0;
-  line-height: 1;
+  line-height: 1.04;
   margin: 0;
-  max-width: 1180px;
+  max-width: 900px;
   text-shadow: 0 5px 18px rgba(0, 0, 0, 0.28);
   text-transform: uppercase;
+}
+
+.role-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 0.8rem;
+}
+
+.role-card {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.76);
+  border-radius: 8px;
+  box-shadow: 0 18px 42px rgba(13, 28, 37, 0.24);
+  color: #1e2930;
+  display: grid;
+  gap: 0.8rem;
+  min-height: 17rem;
+  padding: 1.2rem;
+}
+
+.role-icon {
+  align-items: center;
+  background: #f6c85f;
+  border-radius: 8px;
+  color: #263238;
+  display: inline-flex;
+  height: 2.8rem;
+  justify-content: center;
+  width: 2.8rem;
+}
+
+.role-icon svg {
+  height: 1.4rem;
+  width: 1.4rem;
+}
+
+.role-card h2 {
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+.role-card p {
+  color: #40515b;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.role-actions {
+  align-self: end;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.role-actions .button-link {
+  width: 100%;
 }
 
 .dashboard-center {
@@ -657,7 +728,15 @@ dd {
   }
 
   .landing-screen {
-    gap: 1.5rem;
+    align-items: flex-start;
+  }
+
+  .landing-title {
+    font-size: 2.45rem;
+  }
+
+  .role-grid {
+    grid-template-columns: 1fr;
   }
 
   .sidebar {
@@ -724,7 +803,11 @@ dd {
   }
 
   .landing-title {
-    font-size: 4rem;
+    font-size: 1.85rem;
+  }
+
+  .role-card {
+    min-height: 0;
   }
 
   .identity {

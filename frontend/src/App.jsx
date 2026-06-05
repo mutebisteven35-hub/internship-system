@@ -17,7 +17,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { Link, Navigate, NavLink, Route, Routes, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Link, Navigate, NavLink, Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { api } from "./api";
 import { useAuth } from "./AuthContext";
 
@@ -25,6 +25,46 @@ const APP_SHORT_NAME = "ILES";
 const APP_FULL_NAME = "INTERNSHIP LOGGING AND EVALUATION SYSTEM";
 const APP_DISPLAY_NAME = `${APP_FULL_NAME} (${APP_SHORT_NAME})`;
 const today = () => new Date().toISOString().slice(0, 10);
+const ROLE_ACCESS = [
+  {
+    id: "student",
+    label: "Student",
+    title: "Student workspace",
+    description: "Create a student account, maintain logbooks, submit attendance, and read evaluations.",
+    action: "Continue as student",
+    to: "/login?role=student",
+    registerTo: "/register",
+    registerLabel: "Create student account",
+    icon: GraduationCap,
+  },
+  {
+    id: "instructor",
+    label: "Instructor",
+    title: "Instructor workspace",
+    description: "Review assigned student activity, post evaluations, and manage teaching work.",
+    action: "Continue as instructor",
+    to: "/login?role=instructor",
+    icon: ClipboardList,
+  },
+  {
+    id: "admin",
+    label: "Admin",
+    title: "Admin workspace",
+    description: "Manage users, courses, placements, organizations, and academic setup.",
+    action: "Continue as admin",
+    to: "/login?role=admin",
+    icon: ShieldCheck,
+  },
+];
+const ROLE_ACCESS_BY_ID = Object.fromEntries(ROLE_ACCESS.map((role) => [role.id, role]));
+
+function roleLabel(role) {
+  return ROLE_ACCESS_BY_ID[role]?.label || "User";
+}
+
+function defaultPathForRole(role) {
+  return role === "admin" ? "/app/admin" : "/app/dashboard";
+}
 
 function useLoad(loader, deps = []) {
   const [data, setData] = useState(null);
@@ -136,22 +176,36 @@ function Shell() {
 }
 
 function Login() {
-  const { user, login } = useAuth();
+  const { user, login, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const selectedRole = ROLE_ACCESS_BY_ID[searchParams.get("role")] || null;
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const successMessage = location.state?.message;
 
-  if (user) return <Navigate to="/app/dashboard" replace />;
+  if (user) return <Navigate to={defaultPathForRole(user.role)} replace />;
 
   async function submit(event) {
     event.preventDefault();
     setBusy(true);
     setError("");
     try {
-      await login(username, password);
+      const signedInUser = await login(username, password);
+      if (selectedRole && signedInUser.role !== selectedRole.id) {
+        await logout();
+        setPassword("");
+        setError(
+          `This account is registered as ${roleLabel(signedInUser.role)}, not ${selectedRole.label}. Choose ${roleLabel(
+            signedInUser.role,
+          )} on the first screen or ask an administrator to update the account role.`,
+        );
+        return;
+      }
+      navigate(defaultPathForRole(signedInUser.role), { replace: true });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -166,7 +220,7 @@ function Login() {
           <GraduationCap aria-hidden="true" />
           <div>
             <strong className="brand-full-name">{APP_DISPLAY_NAME}</strong>
-            <span>Account access</span>
+            <span>{selectedRole ? `${selectedRole.label} access` : "Account access"}</span>
           </div>
         </div>
         <form onSubmit={submit}>
@@ -179,9 +233,11 @@ function Login() {
             <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} required />
           </label>
           <div className="auth-links">
-            <Link className="text-link" to="/register">
-              Create account
-            </Link>
+            {(!selectedRole || selectedRole.id === "student") && (
+              <Link className="text-link" to="/register">
+                Create student account
+              </Link>
+            )}
             <Link className="text-link" to="/forgot-password">
               Forgot password?
             </Link>
@@ -241,7 +297,7 @@ function Register() {
         <div className="brand login-brand">
           <UserPlus aria-hidden="true" />
           <div>
-            <strong>Create account</strong>
+            <strong>Create student account</strong>
             <span>{APP_DISPLAY_NAME}</span>
           </div>
         </div>
@@ -293,7 +349,7 @@ function Register() {
             <span>{busy ? "Creating..." : "Create student account"}</span>
           </button>
         </form>
-        <Link className="text-link auth-back-link" to="/login">
+        <Link className="text-link auth-back-link" to="/login?role=student">
           Already have an account?
         </Link>
       </section>
@@ -463,14 +519,45 @@ function ChangePassword() {
 
 function LandingPage() {
   const { user, loading } = useAuth();
-  const proceedTo = user ? "/app/dashboard" : "/login";
+  if (loading) return <FullScreenStatus text="Loading your workspace..." />;
+  if (user) return <Navigate to={defaultPathForRole(user.role)} replace />;
 
   return (
     <main className="landing-screen" aria-label={APP_SHORT_NAME}>
-      <h1 className="landing-title">{APP_FULL_NAME}</h1>
-      <Link className="welcome-action" to={loading ? "#" : proceedTo} aria-disabled={loading}>
-        Proceed
-      </Link>
+      <section className="landing-content">
+        <div className="brand landing-brand">
+          <GraduationCap aria-hidden="true" />
+          <div>
+            <strong className="brand-full-name">{APP_DISPLAY_NAME}</strong>
+            <span>Choose your workspace</span>
+          </div>
+        </div>
+        <h1 className="landing-title">{APP_FULL_NAME}</h1>
+        <div className="role-grid" aria-label="Account type">
+          {ROLE_ACCESS.map((role) => {
+            const Icon = role.icon;
+            return (
+              <article className="role-card" key={role.id}>
+                <div className="role-icon">
+                  <Icon aria-hidden="true" />
+                </div>
+                <h2>{role.title}</h2>
+                <p>{role.description}</p>
+                <div className="role-actions">
+                  <Link className="button-link" to={role.to}>
+                    <span>{role.action}</span>
+                  </Link>
+                  {role.registerTo && (
+                    <Link className="text-link" to={role.registerTo}>
+                      {role.registerLabel}
+                    </Link>
+                  )}
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </section>
     </main>
   );
 }
