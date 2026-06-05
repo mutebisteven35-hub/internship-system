@@ -38,6 +38,8 @@ button,
   min-height: 2.45rem;
   padding: 0.58rem 0.9rem;
   text-decoration: none;
+  text-align: center;
+  overflow-wrap: anywhere;
 }
 
 button svg,
@@ -196,6 +198,7 @@ textarea {
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr);
   min-height: 100vh;
+  width: 100%;
 }
 
 .sidebar {
@@ -265,8 +268,14 @@ textarea {
   display: flex;
   gap: 0.65rem;
   min-height: 2.65rem;
+  min-width: 0;
   padding: 0.68rem 0.75rem;
   text-decoration: none;
+}
+
+.sidebar a span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .sidebar a svg {
@@ -298,6 +307,12 @@ textarea {
   align-items: center;
   display: flex;
   gap: 0.55rem;
+  min-width: 0;
+}
+
+.identity span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .identity svg {
@@ -508,16 +523,16 @@ h2 {
 }
 
 .metric-grid {
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
 }
 
 .card-grid {
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
 }
 
 .admin-grid {
   align-items: start;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
 }
 
 .metric,
@@ -527,6 +542,7 @@ h2 {
   border: 1px solid #d8e0e5;
   border-radius: 8px;
   box-shadow: 0 8px 20px rgba(16, 24, 40, 0.04);
+  min-width: 0;
   padding: 1rem;
 }
 
@@ -581,7 +597,7 @@ h2 {
   font-size: 0.78rem;
   padding: 0.28rem 0.58rem;
   text-transform: capitalize;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .pill.approved,
@@ -619,6 +635,7 @@ dt {
 
 dd {
   margin: 0.12rem 0 0;
+  overflow-wrap: anywhere;
 }
 
 .detail-layout,
@@ -640,11 +657,13 @@ dd {
 
 .list-row strong {
   display: block;
+  overflow-wrap: anywhere;
 }
 
 .list-row span {
   color: #667781;
   font-size: 0.86rem;
+  overflow-wrap: anywhere;
 }
 
 .compact-form {
@@ -770,11 +789,96 @@ dd {
 }
 
 @media (max-width: 520px) {
+  .center-screen,
+  .login-screen {
+    align-items: flex-start;
+    min-height: 100svh;
+    padding: 0.75rem;
+  }
+
+  .login-panel {
+    padding: 1rem;
+  }
+
+  .login-brand {
+    margin-bottom: 1rem;
+  }
+
+  .login-brand .brand-full-name {
+    font-size: 1rem;
+  }
+
+  .landing-screen {
+    min-height: 100svh;
+    padding: 0.85rem;
+  }
+
+  .landing-content {
+    gap: 0.9rem;
+  }
+
+  .landing-brand .brand-full-name {
+    font-size: 1rem;
+  }
+
   .content,
   .topbar,
   .sidebar {
     padding-left: 0.85rem;
     padding-right: 0.85rem;
+  }
+
+  .sidebar {
+    gap: 0.8rem;
+    overflow-x: hidden;
+    padding-bottom: 0.8rem;
+    padding-top: 0.8rem;
+  }
+
+  .sidebar nav {
+    display: flex;
+    gap: 0.45rem;
+    margin-left: 0;
+    margin-right: 0;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    padding: 0 0 0.25rem;
+    scrollbar-width: thin;
+  }
+
+  .sidebar a {
+    flex: 0 0 auto;
+    min-height: 2.35rem;
+    padding: 0.55rem 0.68rem;
+    white-space: nowrap;
+  }
+
+  .content {
+    padding-top: 0.9rem;
+  }
+
+  .page-head {
+    margin-bottom: 0.9rem;
+  }
+
+  h1 {
+    font-size: 1.45rem;
+  }
+
+  h2 {
+    font-size: 1rem;
+  }
+
+  .metric,
+  .card,
+  .panel,
+  .role-card {
+    padding: 0.85rem;
+  }
+
+  .metric strong {
+    font-size: 1.6rem;
   }
 
   dl {
@@ -798,8 +902,19 @@ dd {
     font-size: 1.35rem;
   }
 
-  .welcome-action {
+  .welcome-action,
+  .auth-links .text-link,
+  .row-actions button,
+  .row-actions .button-link,
+  .action-row button,
+  .role-actions .text-link {
     width: 100%;
+  }
+
+  .auth-links,
+  .row-actions {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .landing-title {
