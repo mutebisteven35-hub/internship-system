@@ -1,3 +1,5 @@
+import os
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
@@ -74,7 +76,7 @@ class UserAdminSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
         UserProfile.objects.update_or_create(user=user, defaults=profile_data)
-        return user
+        return User.objects.select_related("profile").get(pk=user.pk)
 
     def update(self, instance, validated_data):
         profile_data = validated_data.pop("profile", None)
@@ -96,6 +98,8 @@ class RegistrationSerializer(serializers.Serializer):
     last_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
     student_number = serializers.CharField(max_length=40, required=False, allow_blank=True)
     department = serializers.CharField(max_length=120, required=False, allow_blank=True)
+    role = serializers.ChoiceField(choices=UserProfile.ROLE_CHOICES, default=UserProfile.ROLE_STUDENT)
+    signup_code = serializers.CharField(write_only=True, required=False, allow_blank=True)
     password = serializers.CharField(write_only=True, validators=[validate_password])
     confirm_password = serializers.CharField(write_only=True)
 
@@ -116,19 +120,43 @@ class RegistrationSerializer(serializers.Serializer):
     def validate(self, attrs):
         if attrs["password"] != attrs["confirm_password"]:
             raise serializers.ValidationError({"confirm_password": "Passwords do not match."})
+        role = attrs.get("role", UserProfile.ROLE_STUDENT)
+        code_env = {
+            UserProfile.ROLE_INSTRUCTOR: "INSTRUCTOR_SIGNUP_CODE",
+            UserProfile.ROLE_ADMIN: "ADMIN_SIGNUP_CODE",
+        }.get(role)
+        if code_env:
+            expected_code = os.getenv(code_env, "").strip()
+            provided_code = attrs.get("signup_code", "").strip()
+            role_label = dict(UserProfile.ROLE_CHOICES).get(role, role)
+            if not expected_code:
+                raise serializers.ValidationError(
+                    {"signup_code": f"{role_label} account creation is not configured yet."}
+                )
+            if provided_code != expected_code:
+                raise serializers.ValidationError(
+                    {"signup_code": f"Enter the correct registration code for a {role_label.lower()} account."}
+                )
         return attrs
 
     def create(self, validated_data):
+        role = validated_data.pop("role", UserProfile.ROLE_STUDENT)
+        validated_data.pop("signup_code", None)
         profile_data = {
-            "role": UserProfile.ROLE_STUDENT,
+            "role": role,
             "department": validated_data.pop("department", ""),
             "student_number": validated_data.pop("student_number", ""),
         }
         password = validated_data.pop("password")
         validated_data.pop("confirm_password", None)
-        user = User.objects.create_user(password=password, **validated_data)
+        user = User.objects.create_user(
+            password=password,
+            is_staff=role == UserProfile.ROLE_ADMIN,
+            is_superuser=role == UserProfile.ROLE_ADMIN,
+            **validated_data,
+        )
         UserProfile.objects.update_or_create(user=user, defaults=profile_data)
-        return user
+        return User.objects.select_related("profile").get(pk=user.pk)
 
 
 class ChangePasswordSerializer(serializers.Serializer):

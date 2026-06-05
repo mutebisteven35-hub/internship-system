@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
@@ -117,6 +119,79 @@ class IlesApiTests(APITestCase):
         me = self.client.get(reverse("current-user"))
         self.assertEqual(me.status_code, 200)
         self.assertEqual(me.data["username"], "newstudent")
+
+    def test_public_registration_creates_instructor_with_code(self):
+        with patch.dict("os.environ", {"INSTRUCTOR_SIGNUP_CODE": "TeachCode2026!"}):
+            response = self.client.post(
+                reverse("register"),
+                {
+                    "username": "newinstructor",
+                    "email": "newinstructor@iles.local",
+                    "first_name": "New",
+                    "last_name": "Instructor",
+                    "department": "Computing",
+                    "role": UserProfile.ROLE_INSTRUCTOR,
+                    "signup_code": "TeachCode2026!",
+                    "password": "NewInstructorPassw0rd!",
+                    "confirm_password": "NewInstructorPassw0rd!",
+                },
+            )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["user"]["role"], UserProfile.ROLE_INSTRUCTOR)
+        user = User.objects.get(username="newinstructor")
+        self.assertFalse(user.is_staff)
+        self.assertFalse(user.is_superuser)
+        self.assertEqual(user.profile.role, UserProfile.ROLE_INSTRUCTOR)
+
+    def test_public_registration_creates_admin_with_code(self):
+        with patch.dict("os.environ", {"ADMIN_SIGNUP_CODE": "AdminCode2026!"}):
+            response = self.client.post(
+                reverse("register"),
+                {
+                    "username": "newadmin",
+                    "email": "newadmin@iles.local",
+                    "first_name": "New",
+                    "last_name": "Admin",
+                    "role": UserProfile.ROLE_ADMIN,
+                    "signup_code": "AdminCode2026!",
+                    "password": "NewAdminPassw0rd!",
+                    "confirm_password": "NewAdminPassw0rd!",
+                },
+            )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["user"]["role"], UserProfile.ROLE_ADMIN)
+        user = User.objects.get(username="newadmin")
+        self.assertTrue(user.is_staff)
+        self.assertTrue(user.is_superuser)
+        self.assertEqual(user.profile.role, UserProfile.ROLE_ADMIN)
+
+    def test_privileged_registration_requires_matching_code(self):
+        with patch.dict("os.environ", {"INSTRUCTOR_SIGNUP_CODE": ""}):
+            missing_code = self.client.post(
+                reverse("register"),
+                {
+                    "username": "blockedinstructor",
+                    "role": UserProfile.ROLE_INSTRUCTOR,
+                    "password": "NewInstructorPassw0rd!",
+                    "confirm_password": "NewInstructorPassw0rd!",
+                },
+            )
+        self.assertEqual(missing_code.status_code, 400)
+
+        with patch.dict("os.environ", {"ADMIN_SIGNUP_CODE": "AdminCode2026!"}):
+            wrong_code = self.client.post(
+                reverse("register"),
+                {
+                    "username": "blockedadmin",
+                    "role": UserProfile.ROLE_ADMIN,
+                    "signup_code": "wrong-code",
+                    "password": "NewAdminPassw0rd!",
+                    "confirm_password": "NewAdminPassw0rd!",
+                },
+            )
+        self.assertEqual(wrong_code.status_code, 400)
 
     def test_registration_rejects_duplicate_username_or_email(self):
         duplicate_username = self.client.post(

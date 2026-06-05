@@ -177,9 +177,13 @@ DJANGO_ALLOWED_HOSTS=YOURUSERNAME.pythonanywhere.com
 DJANGO_SECURE_SSL_REDIRECT=True
 DJANGO_SESSION_COOKIE_SECURE=True
 DJANGO_CSRF_COOKIE_SECURE=True
+INSTRUCTOR_SIGNUP_CODE=replace-with-private-instructor-code
+ADMIN_SIGNUP_CODE=replace-with-private-admin-code
 VITE_API_BASE_URL=/api
 VITE_BASE_PATH=/static/frontend/
 ```
+
+Students can create accounts without a code. Instructor and admin account creation requires the matching code above.
 
 For a quick demo, the app will use SQLite if no database variables are set. For production, use PostgreSQL and add:
 
@@ -376,6 +380,8 @@ DATABASE_URL=your-postgres-connection-string
 CORS_ALLOWED_ORIGINS=https://your-frontend-project.vercel.app
 DJANGO_CSRF_TRUSTED_ORIGINS=https://your-frontend-project.vercel.app,https://your-backend-project.vercel.app
 DJANGO_SECURE_SSL_REDIRECT=False
+INSTRUCTOR_SIGNUP_CODE=replace-with-private-instructor-code
+ADMIN_SIGNUP_CODE=replace-with-private-admin-code
 ```
 
 ### 3. Deploy Frontend on Vercel
@@ -406,6 +412,8 @@ $env:DATABASE_URL="your-postgres-connection-string"
 $env:DJANGO_SECRET_KEY="replace-with-a-long-random-secret"
 $env:DJANGO_DEBUG="False"
 $env:DJANGO_ALLOWED_HOSTS=".vercel.app"
+$env:INSTRUCTOR_SIGNUP_CODE="replace-with-private-instructor-code"
+$env:ADMIN_SIGNUP_CODE="replace-with-private-admin-code"
 .\.venv\Scripts\python.exe manage.py migrate
 .\.venv\Scripts\python.exe manage.py createsuperuser
 ```

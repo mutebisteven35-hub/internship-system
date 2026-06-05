@@ -33,7 +33,7 @@ const ROLE_ACCESS = [
     description: "Create a student account, maintain logbooks, submit attendance, and read evaluations.",
     action: "Continue as student",
     to: "/login?role=student",
-    registerTo: "/register",
+    registerTo: "/register?role=student",
     registerLabel: "Create student account",
     icon: GraduationCap,
   },
@@ -44,6 +44,8 @@ const ROLE_ACCESS = [
     description: "Review assigned student activity, post evaluations, and manage teaching work.",
     action: "Continue as instructor",
     to: "/login?role=instructor",
+    registerTo: "/register?role=instructor",
+    registerLabel: "Create instructor account",
     icon: ClipboardList,
   },
   {
@@ -53,6 +55,8 @@ const ROLE_ACCESS = [
     description: "Manage users, courses, placements, organizations, and academic setup.",
     action: "Continue as admin",
     to: "/login?role=admin",
+    registerTo: "/register?role=admin",
+    registerLabel: "Create admin account",
     icon: ShieldCheck,
   },
 ];
@@ -181,6 +185,7 @@ function Login() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const selectedRole = ROLE_ACCESS_BY_ID[searchParams.get("role")] || null;
+  const registrationRole = selectedRole || ROLE_ACCESS_BY_ID.student;
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -233,11 +238,9 @@ function Login() {
             <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} required />
           </label>
           <div className="auth-links">
-            {(!selectedRole || selectedRole.id === "student") && (
-              <Link className="text-link" to="/register">
-                Create student account
-              </Link>
-            )}
+            <Link className="text-link" to={registrationRole.registerTo}>
+              {registrationRole.registerLabel}
+            </Link>
             <Link className="text-link" to="/forgot-password">
               Forgot password?
             </Link>
@@ -257,6 +260,9 @@ function Login() {
 function Register() {
   const { user, loginWithToken } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const selectedRole = ROLE_ACCESS_BY_ID[searchParams.get("role")] || ROLE_ACCESS_BY_ID.student;
+  const requiresSignupCode = selectedRole.id !== "student";
   const [form, setForm] = useState({
     username: "",
     email: "",
@@ -264,13 +270,15 @@ function Register() {
     last_name: "",
     student_number: "",
     department: "",
+    role: selectedRole.id,
+    signup_code: "",
     password: "",
     confirm_password: "",
   });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  if (user) return <Navigate to="/app/dashboard" replace />;
+  if (user) return <Navigate to={defaultPathForRole(user.role)} replace />;
 
   function update(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -281,9 +289,9 @@ function Register() {
     setBusy(true);
     setError("");
     try {
-      const data = await api.register(form);
+      const data = await api.register({ ...form, role: selectedRole.id });
       loginWithToken(data.token, data.user);
-      navigate("/app/dashboard", { replace: true });
+      navigate(defaultPathForRole(data.user.role), { replace: true });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -297,7 +305,7 @@ function Register() {
         <div className="brand login-brand">
           <UserPlus aria-hidden="true" />
           <div>
-            <strong>Create student account</strong>
+            <strong>{selectedRole.registerLabel}</strong>
             <span>{APP_DISPLAY_NAME}</span>
           </div>
         </div>
@@ -320,16 +328,26 @@ function Register() {
               <input value={form.last_name} onChange={(event) => update("last_name", event.target.value)} />
             </label>
           </div>
-          <div className="form-grid">
+          {(selectedRole.id === "student" || selectedRole.id === "instructor") && (
+            <div className="form-grid">
+              {selectedRole.id === "student" && (
+                <label>
+                  Student number
+                  <input value={form.student_number} onChange={(event) => update("student_number", event.target.value)} />
+                </label>
+              )}
+              <label>
+                Department
+                <input value={form.department} onChange={(event) => update("department", event.target.value)} />
+              </label>
+            </div>
+          )}
+          {requiresSignupCode && (
             <label>
-              Student number
-              <input value={form.student_number} onChange={(event) => update("student_number", event.target.value)} />
+              Registration code
+              <input value={form.signup_code} onChange={(event) => update("signup_code", event.target.value)} required />
             </label>
-            <label>
-              Department
-              <input value={form.department} onChange={(event) => update("department", event.target.value)} />
-            </label>
-          </div>
+          )}
           <label>
             Password
             <input type="password" value={form.password} onChange={(event) => update("password", event.target.value)} required />
@@ -346,10 +364,10 @@ function Register() {
           {error && <p className="error">{error}</p>}
           <button className="primary" disabled={busy}>
             <UserPlus aria-hidden="true" />
-            <span>{busy ? "Creating..." : "Create student account"}</span>
+            <span>{busy ? "Creating..." : selectedRole.registerLabel}</span>
           </button>
         </form>
-        <Link className="text-link auth-back-link" to="/login?role=student">
+        <Link className="text-link auth-back-link" to={selectedRole.to}>
           Already have an account?
         </Link>
       </section>
